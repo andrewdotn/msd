@@ -1,0 +1,78 @@
+.taskview {
+  background-color: lemonchiffon;
+  margin-left: 10px;
+}
+
+.story-map {
+  display: grid;
+  grid-template-columns: minmax(6em, auto);
+  grid-auto-columns: minmax(auto, 20em);
+  float: left;
+  gap: 10px;
+  width: 120%;
+  margin-left: -10%;
+}
+
+.story-map__intersection-cell {
+  border: 1px solid #f4f4f4;
+}
+
+.story-map__task:first-child {
+  margin-top: 0;
+}
+
+.story-map__header-link {
+  text-decoration: none;
+  color: black;
+}
+
+.story-map__row-header {
+  font-weight: bold;
+  background-color: #e3e3e3;
+  border: 1px solid gray;
+}
+
+.story-map__row-header__other {
+  background-color: white;
+}
+
+.story-map__column-header {
+  padding: 0.25em 1em;
+  font-weight: bold;
+  background-color: #e3e3e3;
+  border: 1px solid gray;
+}
+
+.story-map__column-header__other {
+  background-color: white;
+}
+
+.story-map__task {
+  margin-top: 10px;
+  min-width: 100px;
+  line-break: loose;
+  padding: 2px;
+}
+
+.story-map__task__done {
+  background-color: #cbfdcc;
+}
+
+.story-map__task__todo {
+  background-color: white;
+  border: 1px solid gray;
+}
+
+.story-map__task__started {
+  background-color: rgba(136, 210, 255, 0.56);
+}
+
+.story-map__task__cancelled {
+  text-decoration: line-through;
+  color: #777777;
+  background-color: #eaeaea;
+}
+
+.story-map__task-estimate {
+  color: gray;
+}

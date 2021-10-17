@@ -1,0 +1,153 @@
+body {
+  font-family: "Helvetica Neue", sans-serif;
+  font-weight: 300;
+  font-size: 11pt;
+  margin: 0px;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+td {
+  padding: 2px 4px;
+}
+tr:nth-child(even) {
+  background-color: #ebebeb;
+}
+
+th {
+  background-color: #d7d7d7;
+  text-align: left;
+}
+
+.form__control {
+  display: flex;
+}
+
+.form__label {
+  text-align: right;
+  margin-right: 0.5em;
+  min-width: 7em;
+}
+
+.form__field_error {
+  font-weight: normal;
+  color: red;
+}
+
+.form__input {
+  flex: 1 0 auto;
+}
+
+.form__submit {
+  font-weight: normal;
+  font-size: 110%;
+  background-color: #0017c6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 5px;
+  margin-right: 8px;
+}
+
+.form__submit:hover {
+  background-color: #001eff;
+}
+
+.form__submit:active {
+  background-color: red;
+  transition: transform 0.25s;
+  transform: translateY(2px);
+}
+
+.tasknav {
+  display: flex;
+  background-color: #eeeeee;
+  padding: 4px;
+}
+
+.tasknav__link {
+  text-decoration: none;
+  font-weight: normal;
+  font-size: 110%;
+  background-color: gray;
+  color: white;
+  border-radius: 4px;
+  padding: 3px 5px;
+  margin-right: 8px;
+}
+
+.taskmain {
+  display: flex;
+  justify-content: center;
+}
+
+.taskmain__inner {
+  flex: 1 20em;
+  max-width: 80%;
+  position: relative;
+}
+
+.tasklist5 {
+  display: grid;
+  grid-template-columns: auto auto auto auto auto;
+}
+
+.tasklist3 {
+  display: grid;
+  grid-template-columns: auto auto auto;
+}
+
+.tasklist__cell {
+  padding: 1px 3px;
+}
+
+.tasklist5 .tasklist__cell:nth-child(10n + 1),
+.tasklist5 .tasklist__cell:nth-child(10n + 2),
+.tasklist5 .tasklist__cell:nth-child(10n + 3),
+.tasklist5 .tasklist__cell:nth-child(10n + 4),
+.tasklist5 .tasklist__cell:nth-child(10n + 5) {
+  background-color: #ebebeb;
+}
+
+.tasklist3 .tasklist__cell:nth-child(6n + 1),
+.tasklist3 .tasklist__cell:nth-child(6n + 2),
+.tasklist3 .tasklist__cell:nth-child(6n + 3) {
+  background-color: #ebebeb;
+}
+
+.tasklist__header {
+  background-color: #d7d7d7;
+  text-align: left;
+  font-weight: bold;
+}
+
+.tasklist__task_link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.tasklist__task_link:hover {
+  text-decoration: underline;
+  color: blue;
+}
+
+.tasklist__spacer {
+  width: 2em;
+  display: inline-block;
+}
+
+.tasklist__task {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tasklist__date {
+  white-space: nowrap;
+}
+
+.taskdetail__id {
+  color: #cdcdcd;
+}
