@@ -1,8 +1,7 @@
 import blessed, { Widgets } from "blessed";
-import { inspect } from "util";
 import { LogWidget } from "./log-widget";
 import { MainWindow } from "./main-window";
-import { TitleEditor } from "./title-editor";
+import { BasicEditor } from "./basic-editor";
 import { TaskManager } from "./task-manager";
 import { TaskListWidget } from "./task-list-widget";
 import { ParentedTaskNode } from "./task-node";
@@ -11,6 +10,8 @@ import { getConnection } from "./db";
 import { serve } from "./server";
 import { logInfo } from "./log";
 import { parseIntMaybe } from "./util/safer-parse-int";
+import { TaskEditor } from "./task-editor";
+import { Duration, DurationParseError } from "./duration";
 
 type ArgvOptions = {
   database?: string;
@@ -74,28 +75,48 @@ async function main() {
 
   taskView.focus();
 
-  const editor = new TitleEditor(screen, { remindAboutEditor: true });
+  const taskEditor = new TaskEditor(screen);
   let taskBeingEdited: ParentedTaskNode | undefined;
 
   let yankedTask: ParentedTaskNode | undefined;
 
-  editor.onSubmit(async () => {
-    editor.hide();
-    taskView.focus();
-    if (taskBeingEdited) {
-      if (editor.content !== "") {
-        taskBeingEdited.title = editor.content;
-        await taskBeingEdited.save();
-        taskView.update();
-        taskView.down(1);
-      } else {
-        // Delete incomplete task
-        taskBeingEdited.removeFromTree();
+  taskEditor.onSubmit(async () => {
+    let existingEstimate = taskBeingEdited!.task.estimatedMinutes;
+    let duration: Duration | null = null;
+    if (taskEditor.estimate !== "") {
+      try {
+        duration = new Duration(taskEditor.estimate);
+      } catch (e) {
+        if (e instanceof DurationParseError) {
+          taskEditor.estimate = `Error: ${e.message}: ${taskEditor.estimate}`;
+          taskEditor.focusEstimate();
+          return;
+        } else {
+          throw e;
+        }
       }
     }
+
+    taskEditor.hide();
+    taskView.focus();
+
+    if (taskEditor.taskTitle !== "") {
+      taskBeingEdited!.title = taskEditor.taskTitle;
+      if (duration !== null) {
+        taskBeingEdited!.task.estimatedMinutes = duration.totalMinutes();
+      } else if (existingEstimate != null && taskEditor.estimate == "") {
+        taskBeingEdited!.task.estimatedMinutes = null;
+      }
+      await taskBeingEdited!.save();
+      taskView.update(taskBeingEdited);
+    } else {
+      // Delete incomplete task
+      taskBeingEdited!.removeFromTree();
+    }
+
     screen.render();
   });
-  editor.onCancel(async () => {
+  taskEditor.onCancel(async () => {
     if (taskBeingEdited && taskBeingEdited.task.id === undefined) {
       taskBeingEdited.removeFromTree();
     }
@@ -134,14 +155,14 @@ async function main() {
     }
   }
 
-  const searchField = new TitleEditor(screen);
+  const searchField = new BasicEditor(screen);
   searchField.description = "Search";
   searchField.onSubmit(() => {
     searchField.hide();
     runSearch();
   });
 
-  const gotoField = new TitleEditor(screen);
+  const gotoField = new BasicEditor(screen);
   gotoField.description = "Goto by ID";
   gotoField.onSubmit(() => {
     gotoField.hide();
@@ -188,10 +209,11 @@ async function main() {
       taskBeingEdited = taskManager.createTaskNode({
         after: taskView.getSelectedTask(),
       });
-      editor.description = `New task title`;
-      editor.setValue("");
-      editor.show();
-      editor.focusPush();
+      taskEditor.dialogTitle = `New task title`;
+      taskEditor.taskTitle = "";
+      taskEditor.estimate = "";
+      taskEditor.show();
+      taskEditor.focus();
     } else if (task && ch === "d") {
       task.task.toggle();
       await task.save();
@@ -228,7 +250,7 @@ async function main() {
         existingTask: yankedTask.task,
       });
       await newLink.save();
-      taskView.update();
+      taskView.update(newLink);
     } else if (task && ch === "m") {
       // move yanked task here
       if (
@@ -247,7 +269,7 @@ async function main() {
 
       await newTask.parentLink.save();
       await yankedTask.removeFromTreeAndLinkFromDb();
-      taskView.update();
+      taskView.update(newTask);
     } else if (task && ch === "D") {
       // detach
       const res = task.hasDuplicateElsewhereInTree();
@@ -262,18 +284,19 @@ async function main() {
       taskView.update();
     } else if (task && ch === "e") {
       taskBeingEdited = task;
-      editor.description = `Editing task ${task.task.id} title`;
-      editor.setValue(task.title!);
-      editor.show();
-      editor.focusPush();
+      taskEditor.dialogTitle = `Editing task ${task.task.id} title`;
+      taskEditor.taskTitle = task.title!;
+      taskEditor.estimate = task.task.estimate();
+      taskEditor.show();
+      taskEditor.focus();
     } else if (task && ch === "J") {
       task.move(1);
       await task.save();
-      taskView.update();
+      taskView.update(task);
     } else if (task && ch === "K") {
       task.move(-1);
       await task.save();
-      taskView.update();
+      taskView.update(task);
     } else if (key && key.full === "home") {
       if (taskManager.count() > 0) {
         taskView.setSelection(0);
@@ -316,14 +339,25 @@ async function main() {
       // move down to next task at same depth
       taskView.downSkippingDeeperTasks();
     } else if (task && ch == ">") {
-      task.increaseDepth();
-      await task.save();
-      taskView.update();
-    } else if (task && ch == "<") {
-      if (task.parent?.parent) {
-        task.decreaseDepth();
+      if (task.increaseDepth()) {
         await task.save();
-        taskView.update();
+        taskView.update(task);
+      }
+    } else if (task && ch == "<") {
+      if (task.parent?.parent && task.decreaseDepth()) {
+        await task.save();
+        taskView.update(task);
+      }
+    } else if (task && ch == "a") {
+      const allTasks = [...taskManager.tasks()];
+      const n = taskView.getSelectedTaskIndex()!;
+
+      for (let offset = 1; offset < allTasks.length; offset++) {
+        const i = (n + offset) % allTasks.length;
+        if (allTasks[i].task === task.task) {
+          taskView.setSelection(i);
+          break;
+        }
       }
     } else if (ch == "R") {
       await reloadTasks();
@@ -336,7 +370,7 @@ async function main() {
       logInfo(`openOnly now ${openOnly}`);
       await reloadTasks();
     } else {
-      logInfo(`Unknown key: ${inspect(ch)}, ${inspect(key)}`);
+      // logInfo(`Unknown key: ${inspect(ch)}, ${inspect(key)}`);
     }
     screen.render();
   });

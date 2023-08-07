@@ -79,6 +79,8 @@ export function TaskLog({
       <div className="tasklist__header">Date</div>
       <div className="tasklist__header">Task</div>
       <div className="tasklist__header">Action</div>
+      <div className="tasklist__header"></div>
+      <div className="tasklist__header"></div>
       {entries.map((e) => (
         <Fragment>
           <div className="tasklist__cell tasklist__date">
@@ -88,6 +90,8 @@ export function TaskLog({
             <a href={`/tasks/${e.taskId}`}>{e.title}</a>
           </div>
           <div className="tasklist__cell">{e.message}</div>
+          <div className="tasklist__cell"></div>
+          <div className="tasklist__cell"></div>
         </Fragment>
       ))}
     </div>

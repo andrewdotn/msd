@@ -48,6 +48,21 @@ export function TaskDetail({
       .map((t) => t.task.id)
   ).size;
 
+  let totalEstimate = 0;
+  if (childTasks) {
+    const seenTaskIds = new Set();
+    seenTaskIds.add(childTasks.task.id);
+    for (const c of childTasks.allChildren()) {
+      if (!seenTaskIds.has(c.task.id)) {
+        seenTaskIds.add(c.task.id);
+        const estimate = c.task.estimatedMinutes;
+        if (estimate) {
+          totalEstimate += estimate;
+        }
+      }
+    }
+  }
+
   sections.push(
     <div>
       <h1>
@@ -60,6 +75,12 @@ export function TaskDetail({
         {task.estimatedMinutes == undefined
           ? "?"
           : new Duration(task.estimatedMinutes).toString()}
+        {childTasks && totalEstimate !== 0 && (
+          <div>
+            Total of estimates in children:{" "}
+            {new Duration(totalEstimate).toString()}
+          </div>
+        )}
       </h3>
       <div>
         Created <DateView date={task.createdAt} />

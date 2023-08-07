@@ -191,6 +191,15 @@ export class TaskNode {
     return null;
   }
 
+  hasDirectChild(t: Task): boolean {
+    for (const c of this._children) {
+      if (c.task === t) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   displayString() {
     let str = this.task.displayString();
 
@@ -262,11 +271,6 @@ export class TaskNode {
   }
 
   async save() {
-    logInfo(
-      `Saving task + info ${this.task.id}; ${inspect(this.task)}, ${inspect(
-        this.parentLink
-      )}`
-    );
     if (!rootTaskSaved) {
       await ROOT_TASK.save();
     }
@@ -318,7 +322,8 @@ export class TaskNode {
     }
   }
 
-  increaseDepth() {
+  // Return whether the move was successful
+  increaseDepth(): boolean {
     assertNotFalseNullOrUndefined(
       this.parent,
       "can’t increase depth of orphan"
@@ -326,13 +331,19 @@ export class TaskNode {
 
     const index = this._indexInParent();
     if (index !== 0) {
-      const removed = this.parent._children.delete(index);
       const newParent = this.parent._children.get(index - 1)!;
+      if (newParent.hasDirectChild(this.task)) {
+        // Node already exists as child
+        logInfo("node already exists as child");
+        return false;
+      }
+      const removed = this.parent._children.delete(index);
       newParent.pushChild(removed);
     }
+    return true;
   }
 
-  decreaseDepth() {
+  decreaseDepth(): boolean {
     assertNotFalseNullOrUndefined(
       this.parent,
       "can’t decrease depth of orphan"
@@ -342,10 +353,16 @@ export class TaskNode {
       "can’t decrease depth of child of orphan"
     );
 
+    if (this.parent.parent.hasDirectChild(this.task)) {
+      // Node already exists in grandparent
+      logInfo("node already exists as parent");
+      return false;
+    }
     const myIndex = this._indexInParent();
     const newIndex = this.parent._indexInParent() + 1;
     this.parent._children.delete(myIndex);
     this.parent.parent.insertChild(this as ParentedTaskNode, newIndex);
+    return true;
   }
 
   removeFromTree() {

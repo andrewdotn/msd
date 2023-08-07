@@ -110,10 +110,15 @@ export class TaskListWidget {
     this.taskItems.select(index);
   }
 
-  update() {
-    this.taskItems.setItems(
-      Array.from(this.taskManager.tasks()).map((t) => t.displayString())
-    );
+  update(taskToSelect?: ParentedTaskNode) {
+    const updated = Array.from(this.taskManager.tasks());
+    this.taskItems.setItems(updated.map((t) => t.displayString()));
+    if (taskToSelect) {
+      const index = updated.indexOf(taskToSelect);
+      if (index > 0) {
+        this.taskItems.select(index);
+      }
+    }
   }
 
   onKeypress(func: (ch: string, key: IKeyEventArg) => void) {

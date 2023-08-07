@@ -86,7 +86,9 @@ export async function editTask(req: express.Request, res: express.Response) {
       }
     }
 
-    console.log(fieldErrors);
+    if (fieldErrors.size > 0) {
+      console.log("field errors", fieldErrors);
+    }
 
     if (fieldErrors.size === 0) {
       const hadId = t.hasId();
